@@ -16,7 +16,11 @@ from agents import (
     agente_cenarios,
     agente_consistencia,
     agente_analise_estrategica,
-    agente_redator_relatorios
+    agente_redator_relatorios,
+    futurologista_fronteira,
+    ficcionista_cenarios,
+    voz_juventude,
+    sintetizador_criativo
 )
 
 from tasks import (
@@ -35,10 +39,13 @@ from tasks import (
     task_geracao_cenarios,
     task_consistencia_cenarios,
     task_recomendacoes_estrategicas,
-    task_relatorio_final
+    task_relatorio_final,
+    task_brainstorming_disruptivo,
+    task_consolidacao_criativa
 )
 
 DEMANDA_INICIAL_GLOBAL = ""
+OUTPUT_DIR_GLOBAL = "."
 
 
 # --- DEFINE CALLBACKS PARA OS GATES ASÍNCRONOS EM MARKDOWN ---
@@ -72,7 +79,8 @@ def save_gate_elementos_callback(output):
                 for pend in pyd.pendencias_validacao:
                     content += f"- {pend}\n"
         
-        with open("gate_elementos.md", "w", encoding="utf-8") as f:
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "gate_elementos.md")
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         print("\n" + "="*50 + "\n[PMV] GATE 1: Arquivo 'gate_elementos.md' gerado e salvo com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
@@ -112,7 +120,8 @@ def save_gate_condicionantes_callback(output):
                 content += f"- **Motivo de Derivação (Análise Estrutural)**: {cond.motivo_derivacao}\n"
                 content += f"- **Estados Plausíveis (Bifurcações)**: {', '.join(cond.estados_plausiveis)}\n\n"
         
-        with open("gate_condicionantes.md", "w", encoding="utf-8") as f:
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "gate_condicionantes.md")
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         print("\n" + "="*50 + "\n[PMV] GATE 2: Arquivo 'gate_condicionantes.md' gerado e salvo com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
@@ -140,7 +149,8 @@ def save_gate_consistencia_callback(output):
             for lac in pyd.lacunas:
                 content += f"- {lac}\n"
         
-        with open("gate_consistencia.md", "w", encoding="utf-8") as f:
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "gate_consistencia.md")
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         print("\n" + "="*50 + "\n[PMV] GATE 3: Arquivo 'gate_consistencia.md' gerado e salvo com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
@@ -148,6 +158,37 @@ def save_gate_consistencia_callback(output):
 
 
 # --- CALLBACKS DE RELATÓRIOS EM PDF ---
+
+def save_fase0_pdf_callback(output):
+    """Gera o PDF consolidado da Fase 0 - Ideação Criativa."""
+    try:
+        from pdf_generator import gerar_pdf_fase0
+        ideias_dados = []
+        eixos = []
+        provocacoes = []
+        if output.pydantic:
+            pyd = output.pydantic
+            eixos = getattr(pyd, "eixos_ruptura", [])
+            provocacoes = getattr(pyd, "provocacoes_atores", [])
+            for ideia in getattr(pyd, "ideias", []):
+                ideias_dados.append({
+                    "id": getattr(ideia, "id", ""),
+                    "titulo": getattr(ideia, "titulo", ""),
+                    "descricao": getattr(ideia, "descricao", ""),
+                    "autor_origem": getattr(ideia, "autor_origem", ""),
+                    "plausibilidade": getattr(ideia, "plausibilidade", 0.0)
+                })
+        dados_fase0 = {
+            "demanda_inicial": DEMANDA_INICIAL_GLOBAL or "Tema não especificado",
+            "eixos_ruptura": eixos,
+            "provocacoes_atores": provocacoes,
+            "ideias": ideias_dados
+        }
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase0_criativa.pdf")
+        gerar_pdf_fase0(dados_fase0, path)
+        print("\n" + "="*50 + "\n[PMV] FASE 0: Relatório PDF 'relatorio_fase0_criativa.pdf' gerado com sucesso.\n" + "="*50 + "\n")
+    except Exception as e:
+        print(f"[PMV Error] Falha ao gerar PDF da Fase 0: {e}")
 
 def save_fase1_pdf_callback(output):
     """Gera o PDF consolidado da Fase 1 - Escopo e Workshop de Atores."""
@@ -185,7 +226,8 @@ def save_fase1_pdf_callback(output):
             "opinioes": opinioes_dados,
             "consolidacao": consol_dados
         }
-        gerar_pdf_fase1(dados_workshop, "relatorio_fase1_workshop.pdf")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase1_workshop.pdf")
+        gerar_pdf_fase1(dados_workshop, path)
         print("\n" + "="*50 + "\n[PMV] FASE 1: Relatório PDF 'relatorio_fase1_workshop.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
         print(f"[PMV Error] Falha ao gerar PDF da Fase 1: {e}")
@@ -240,7 +282,8 @@ def save_fase2_pdf_callback(output):
             "elementos": elementos_dados,
             "pendencias_validacao": pendencias
         }
-        gerar_pdf_fase2(dados_mapeamento, "relatorio_fase2_mapeamento.pdf")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase2_mapeamento.pdf")
+        gerar_pdf_fase2(dados_mapeamento, path)
         print("\n" + "="*50 + "\n[PMV] FASE 2: Relatório PDF 'relatorio_fase2_mapeamento.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
         print(f"[PMV Error] Falha ao gerar PDF da Fase 2: {e}")
@@ -302,7 +345,8 @@ def save_fase3_pdf_callback(output):
             "matriz_impacto_cruzado": matriz_ic,
             "condicionantes": condicionantes_dados
         }
-        gerar_pdf_fase3(dados_estruturais, "relatorio_fase3_matrizes.pdf")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase3_matrizes.pdf")
+        gerar_pdf_fase3(dados_estruturais, path)
         print("\n" + "="*50 + "\n[PMV] FASE 3: Relatório PDF 'relatorio_fase3_matrizes.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
         print(f"[PMV Error] Falha ao gerar PDF da Fase 3: {e}")
@@ -371,7 +415,8 @@ def save_fase4_pdf_callback(output):
             "recomendacoes": recom_dados,
             "conclusao_pmv": conclusao
         }
-        gerar_pdf_fase4(dados_cenarios, "relatorio_fase4_cenarios.pdf")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase4_cenarios.pdf")
+        gerar_pdf_fase4(dados_cenarios, path)
         print("\n" + "="*50 + "\n[PMV] FASE 4: Relatório PDF 'relatorio_fase4_cenarios.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
         print(f"[PMV Error] Falha ao gerar PDF da Fase 4: {e}")
@@ -464,6 +509,70 @@ def save_relatorio_final_pdf_callback(output):
         else:
             transversal = raw_out
         
+        # --- CÁLCULO DINÂMICO DE METRICAS ---
+        total_flash_input = 0
+        total_flash_output = 0
+        total_pro_input = 0
+        total_pro_output = 0
+        
+        all_agents = [
+            coordenador_metodologia,
+            futurologista_fronteira,
+            ficcionista_cenarios,
+            voz_juventude,
+            sintetizador_criativo,
+            ator_governo,
+            ator_privado,
+            ator_sociedade_civil,
+            relator_debate,
+            agente_extracao,
+            agente_normalizacao,
+            agente_sinais,
+            agente_agrupamento,
+            agente_classificador,
+            agente_estruturacao,
+            agente_cenarios,
+            agente_consistencia,
+            agente_analise_estrategica,
+            agente_redator_relatorios
+        ]
+        
+        for agent in all_agents:
+            try:
+                usage = agent.llm.get_token_usage_summary()
+                model = agent.llm.model
+                if "flash" in model.lower():
+                    total_flash_input += usage.prompt_tokens
+                    total_flash_output += usage.completion_tokens
+                elif "pro" in model.lower():
+                    total_pro_input += usage.prompt_tokens
+                    total_pro_output += usage.completion_tokens
+            except Exception:
+                pass
+                
+        cost_flash = (total_flash_input / 1_000_000) * 0.075 + (total_flash_output / 1_000_000) * 0.30
+        cost_pro = (total_pro_input / 1_000_000) * 1.25 + (total_pro_output / 1_000_000) * 5.00
+        total_usd = cost_flash + cost_pro
+        total_brl = total_usd * 5.20
+        
+        metrics_summary = {
+            "flash_input": total_flash_input,
+            "flash_output": total_flash_output,
+            "flash_total": total_flash_input + total_flash_output,
+            "flash_cost_usd": cost_flash,
+            
+            "pro_input": total_pro_input,
+            "pro_output": total_pro_output,
+            "pro_total": total_pro_input + total_pro_output,
+            "pro_cost_usd": cost_pro,
+            
+            "total_input": total_flash_input + total_pro_input,
+            "total_output": total_flash_output + total_pro_output,
+            "total_tokens": total_flash_input + total_pro_input + total_flash_output + total_pro_output,
+            "total_cost_usd": total_usd,
+            "total_cost_brl": total_brl
+        }
+        
         demanda = DEMANDA_INICIAL_GLOBAL or "Como a transição demográfica acelerada no Brasil impactará a previdência social?"
         dados_compilados = {
             "demanda_inicial": demanda,
@@ -473,9 +582,11 @@ def save_relatorio_final_pdf_callback(output):
             "workshop": dados_w,
             "mapeamento": dados_m,
             "estruturais": dados_e,
-            "cenarios": dados_c
+            "cenarios": dados_c,
+            "metrics": metrics_summary
         }
-        gerar_pdf_relatorio_final(dados_compilados, "relatorio_final_prospectiva_pmv.pdf")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_final_prospectiva_pmv.pdf")
+        gerar_pdf_relatorio_final(dados_compilados, path)
         print("\n" + "="*50 + "\n[PMV] RELATÓRIO FINAL: PDF 'relatorio_final_prospectiva_pmv.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
         print(f"[PMV Error] Falha ao gerar PDF do Relatório Final: {e}")
@@ -542,7 +653,7 @@ def process_task_tuples(task_name, raw_output):
         print(sep)
         
         # Salva em arquivo .csv
-        csv_filename = f"saida_{task_name.lower().replace(' ', '_')}.csv"
+        csv_filename = os.path.join(OUTPUT_DIR_GLOBAL, f"saida_{task_name.lower().replace(' ', '_')}.csv")
         try:
             with open(csv_filename, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile)
@@ -574,6 +685,8 @@ def make_general_callback(task_name, original_callback=None):
 
 # --- ATRIBUIÇÃO DOS CALLBACKS UNIVERSAIS ÀS TAREFAS ---
 task_interpretacao_demanda.callback = make_general_callback("Interpretacao Demanda")
+task_brainstorming_disruptivo.callback = make_general_callback("Brainstorming Disruptivo")
+task_consolidacao_criativa.callback = make_general_callback("Consolidacao Criativa", save_fase0_pdf_callback)
 task_debate_governo.callback = make_general_callback("Debate Governo")
 task_debate_privado.callback = make_general_callback("Debate Privado")
 task_debate_sociedade.callback = make_general_callback("Debate Sociedade")
@@ -608,9 +721,14 @@ class AnaliseProspectivaCrew:
         global DEMANDA_INICIAL_GLOBAL
         DEMANDA_INICIAL_GLOBAL = self.demanda_inicial
         
-        # Configura o contexto da tarefa de redação final
+        # Configura os contextos de tarefas encadeadas da Fase 1 e Relatório Final
+        task_debate_governo.context = [task_consolidacao_criativa]
+        task_debate_privado.context = [task_consolidacao_criativa]
+        task_debate_sociedade.context = [task_consolidacao_criativa]
+        
         task_relatorio_final.context = [
             task_interpretacao_demanda,
+            task_consolidacao_criativa,
             task_consolidacao_debate,
             task_classificacao_elementos,
             task_proposta_condicionantes,
@@ -619,10 +737,14 @@ class AnaliseProspectivaCrew:
             task_recomendacoes_estrategicas
         ]
 
-        # Instancia a Crew com os 15 agentes e 16 tarefas mapeados
+        # Instancia a Crew com os 19 agentes e 18 tarefas mapeados
         crew = Crew(
             agents=[
                 coordenador_metodologia,
+                futurologista_fronteira,
+                ficcionista_cenarios,
+                voz_juventude,
+                sintetizador_criativo,
                 ator_governo,
                 ator_privado,
                 ator_sociedade_civil,
@@ -640,6 +762,8 @@ class AnaliseProspectivaCrew:
             ],
             tasks=[
                 task_interpretacao_demanda,
+                task_brainstorming_disruptivo,
+                task_consolidacao_criativa,
                 task_debate_governo,
                 task_debate_privado,
                 task_debate_sociedade,
@@ -664,5 +788,79 @@ class AnaliseProspectivaCrew:
         print(f"[PMV] Inicializando a execução do Crew de Análise Prospectiva...")
         result = crew.kickoff(inputs={"demanda_inicial": self.demanda_inicial})
         print(f"[PMV] Execução finalizada com sucesso.")
+        
+        # --- CÁLCULO E EXIBIÇÃO DO MONITOR DE TOKENS E CUSTOS ---
+        try:
+            total_flash_input = 0
+            total_flash_output = 0
+            total_pro_input = 0
+            total_pro_output = 0
+            
+            for agent in crew.agents:
+                try:
+                    usage = agent.llm.get_token_usage_summary()
+                    model = agent.llm.model
+                    if "flash" in model.lower():
+                        total_flash_input += usage.prompt_tokens
+                        total_flash_output += usage.completion_tokens
+                    elif "pro" in model.lower():
+                        total_pro_input += usage.prompt_tokens
+                        total_pro_output += usage.completion_tokens
+                except Exception:
+                    pass
+            
+            flash_in_cost = (total_flash_input / 1_000_000) * 0.075
+            flash_out_cost = (total_flash_output / 1_000_000) * 0.30
+            flash_cost_usd = flash_in_cost + flash_out_cost
+            
+            pro_in_cost = (total_pro_input / 1_000_000) * 1.25
+            pro_out_cost = (total_pro_output / 1_000_000) * 5.00
+            pro_cost_usd = pro_in_cost + pro_out_cost
+            
+            total_cost_usd = flash_cost_usd + pro_cost_usd
+            total_cost_brl = total_cost_usd * 5.20
+            
+            print("\n" + "="*80)
+            print("                     MONITOR DE CONSUMO E CUSTOS DA ANÁLISE")
+            print("="*80)
+            print("  * Câmbio estático referencial: 1 USD = 5.20 BRL")
+            print("-"*80)
+            print("  MODELO GEMINI 3.5 FLASH (Econômico):")
+            print(f"    - Tokens de Entrada : {total_flash_input:,} (${flash_in_cost:.4f} USD / R$ {flash_in_cost*5.20:.4f} BRL)")
+            print(f"    - Tokens de Saída   : {total_flash_output:,} (${flash_out_cost:.4f} USD / R$ {flash_out_cost*5.20:.4f} BRL)")
+            print(f"    - Subtotal          : {total_flash_input + total_flash_output:,} tokens (${flash_cost_usd:.4f} USD / R$ {flash_cost_usd*5.20:.2f} BRL)")
+            print("")
+            print("  MODELO GEMINI 2.5 PRO (Alta Capacidade):")
+            print(f"    - Tokens de Entrada : {total_pro_input:,} (${pro_in_cost:.4f} USD / R$ {pro_in_cost*5.20:.4f} BRL)")
+            print(f"    - Tokens de Saída   : {total_pro_output:,} (${pro_out_cost:.4f} USD / R$ {pro_out_cost*5.20:.4f} BRL)")
+            print(f"    - Subtotal          : {total_pro_input + total_pro_output:,} tokens (${pro_cost_usd:.4f} USD / R$ {pro_cost_usd*5.20:.2f} BRL)")
+            print("-"*80)
+            print("  ACUMULADO TOTAL DO ESTUDO MODULAR:")
+            print(f"    - Total de Tokens   : {total_flash_input + total_flash_output + total_pro_input + total_pro_output:,} tokens")
+            print(f"    - Custo Total USD   : ${total_cost_usd:.4f} USD")
+            print(f"    - Custo Total BRL   : R$ {total_cost_brl:.2f} BRL")
+            print("="*80 + "\n")
+            
+            # Acrescenta painel de faturamento no arquivo de log do console markdown
+            log_metrics_md = (
+                "\n\n## Painel de Auditoria de Consumos e Custos LLM\n\n"
+                f"- **Câmbio estático referencial**: 1 USD = 5.20 BRL\n\n"
+                "| Categoria | Tokens de Entrada | Tokens de Saída | Total de Tokens | Custo (USD) | Custo (BRL) |\n"
+                "| --- | --- | --- | --- | --- | --- |\n"
+                f"| **Gemini 3.5 Flash** | {total_flash_input:,} | {total_flash_output:,} | {total_flash_input + total_flash_output:,} | ${flash_cost_usd:.4f} | R$ {flash_cost_usd*5.20:.2f} |\n"
+                f"| **Gemini 2.5 Pro** | {total_pro_input:,} | {total_pro_output:,} | {total_pro_input + total_pro_output:,} | ${pro_cost_usd:.4f} | R$ {pro_cost_usd*5.20:.2f} |\n"
+                f"| **TOTAL ACUMULADO** | {total_flash_input + total_pro_input:,} | {total_flash_output + total_pro_output:,} | {total_flash_input + total_flash_output + total_pro_input + total_pro_output:,} | **${total_cost_usd:.4f}** | **R$ {total_cost_brl:.2f}** |\n"
+            )
+            # Tenta salvar no fim de log_execucao_pmv.md
+            try:
+                log_md_path = os.path.join(OUTPUT_DIR_GLOBAL, "log_execucao_pmv.md")
+                if os.path.exists(log_md_path):
+                    with open(log_md_path, "a", encoding="utf-8") as f_log:
+                        f_log.write(log_metrics_md)
+            except Exception:
+                pass
+        except Exception as ex_metrics:
+            print(f"[PMV Error] Erro ao processar monitor de consumo: {ex_metrics}")
+            
         return result
 

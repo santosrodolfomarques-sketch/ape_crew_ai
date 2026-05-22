@@ -813,4 +813,135 @@ def gerar_pdf_relatorio_final(dados_compilados, path_saida="relatorio_final_pros
     story.append(Paragraph("Conclusão Final do Estudo Executivo:", styles['CustomH2']))
     story.append(Paragraph(dados_compilados.get("conclusao_PMV", "Estudo estratégico executivo de prospecção concluído com rigor conceitual e integridade analítica."), styles['CustomCallout']))
     
+    # --- PAINEL DE AUDITORIA DE VOLUMETRIA E CUSTOS ---
+    metrics = dados_compilados.get("metrics")
+    if metrics:
+        story.append(PageBreak())
+        story.append(Paragraph("Painel de Auditoria de Volumetria e Custos LLM", styles['CustomTitle']))
+        story.append(Paragraph(
+            "Detalhamento quantitativo dos custos e volume de tokens processados ao longo de todas as fases "
+            "do estudo prospectivo, discriminando o consumo de acordo com a categoria e capacidade do modelo. "
+            "Cotação referencial fixa adotada para cálculo cambial: 1 USD = 5.20 BRL.",
+            styles['CustomBody']
+        ))
+        story.append(Spacer(1, 10))
+        
+        data_cost = [
+            ["Modelo LLM", "Tokens Entrada", "Tokens Saída", "Tokens Total", "Custo (USD)", "Custo (BRL)"],
+            [
+                "Gemini 3.5 Flash\n(Econômico)",
+                f"{metrics.get('flash_input', 0):,}",
+                f"{metrics.get('flash_output', 0):,}",
+                f"{metrics.get('flash_total', 0):,}",
+                f"${metrics.get('flash_cost_usd', 0.0):.4f}",
+                f"R$ {metrics.get('flash_cost_usd', 0.0)*5.20:.4f}"
+            ],
+            [
+                "Gemini 2.5 Pro\n(Alta Capacidade)",
+                f"{metrics.get('pro_input', 0):,}",
+                f"{metrics.get('pro_output', 0):,}",
+                f"{metrics.get('pro_total', 0):,}",
+                f"${metrics.get('pro_cost_usd', 0.0):.4f}",
+                f"R$ {metrics.get('pro_cost_usd', 0.0)*5.20:.4f}"
+            ],
+            [
+                "TOTAL ACUMULADO",
+                f"{metrics.get('total_input', 0):,}",
+                f"{metrics.get('total_output', 0):,}",
+                f"{metrics.get('total_tokens', 0):,}",
+                f"${metrics.get('total_cost_usd', 0.0):.4f}",
+                f"R$ {metrics.get('total_cost_brl', 0.0):.2f}"
+            ]
+        ]
+        
+        t_cost = Table(data_cost, colWidths=[120, 80, 80, 80, 70, 70])
+        t_cost.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1A365D")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E0")),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor("#F7FAFC")]),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor("#E2E8F0")),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8.5),
+        ]))
+        story.append(t_cost)
+        
+    doc.build(story, canvasmaker=NumberedCanvas)
+
+
+def gerar_pdf_fase0(dados_fase0, path_saida="relatorio_fase0_criativa.pdf"):
+    """Gera o PDF consolidado da Fase 0 - Ideação Criativa."""
+    doc = SimpleDocTemplate(
+        path_saida,
+        pagesize=letter,
+        leftMargin=54,
+        rightMargin=54,
+        topMargin=54,
+        bottomMargin=54
+    )
+    
+    styles = get_custom_styles()
+    story = []
+    
+    # Capa
+    story.append(Spacer(1, 150))
+    story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 0", styles['CoverTitle']))
+    story.append(Paragraph("Ideação Criativa, Sinais de Fronteira e Rupturas Metodológicas", styles['CoverSubtitle']))
+    story.append(Spacer(1, 100))
+    story.append(Paragraph("<b>Demanda Analisada:</b><br/>" + dados_fase0.get("demanda_inicial", ""), styles['CustomCallout']))
+    story.append(Spacer(1, 100))
+    story.append(Paragraph("Sistema Modular de Análise Prospectiva e Cenários com IA<br/>"
+                           "MGI - 2026", styles['CoverMeta']))
+    story.append(PageBreak())
+    
+    # Seção 1: Eixos de Ruptura
+    story.append(Paragraph("1. Eixos Temáticos de Ruptura Conceitual", styles['CustomH1']))
+    story.append(Paragraph(
+        "Antes do debate de atores tradicionais, realizou-se uma sessão disruptiva com agentes de fronteira, "
+        "identificando-se vetores de mudança profunda e eixos de ruptura ética, social e tecnológica:",
+        styles['CustomBody']
+    ))
+    
+    eixos = dados_fase0.get("eixos_ruptura", [])
+    for eixo in eixos:
+        story.append(Paragraph(f"⚡ {eixo}", styles['CustomBullet']))
+    
+    story.append(Spacer(1, 15))
+    
+    # Seção 2: Ideias Fora-da-Caixa Mapeadas
+    story.append(Paragraph("2. Inventário de Ideias Fora-da-Caixa e Sinais de Fronteira", styles['CustomH1']))
+    story.append(Paragraph(
+        "Foram isoladas as seguintes ideias periféricas e sinais disruptivos com seus respectivos autores e plausibilidades:",
+        styles['CustomBody']
+    ))
+    
+    ideias = dados_fase0.get("ideias", [])
+    for ideia in ideias:
+        desc = f"<b>{ideia.get('titulo', '')} (ID: {ideia.get('id', '')})</b><br/>" \
+               f"Descrição: {ideia.get('descricao', '')}<br/>" \
+               f"<i>Autor de Origem: {ideia.get('autor_origem', '')} | Plausibilidade Estimada: {ideia.get('plausibilidade', 0.0)*100:.0f}%</i>"
+        story.append(Paragraph(f"🌱 {desc}", styles['CustomBullet']))
+        story.append(Spacer(1, 10))
+        
+    story.append(PageBreak())
+    
+    # Seção 3: Provocações para os Atores (Fase 1)
+    story.append(Paragraph("3. Provocações Críticas para os Atores Setoriais", styles['CustomH1']))
+    story.append(Paragraph(
+        "Para balizar o debate convencional e arrancar as discussões do senso comum, foram formuladas "
+        "dilemas éticos e provocações que os atores da Fase 1 são obrigados a responder:",
+        styles['CustomBody']
+    ))
+    
+    provocacoes = dados_fase0.get("provocacoes_atores", [])
+    for prov in provocacoes:
+        story.append(Paragraph(f"❓ {prov}", styles['CustomCallout']))
+        story.append(Spacer(1, 5))
+        
     doc.build(story, canvasmaker=NumberedCanvas)

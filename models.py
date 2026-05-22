@@ -155,3 +155,20 @@ class RecomendacoesOutput(BaseModel):
     tema: str = Field(..., description="Tema central da análise prospectiva.")
     recomendacoes: List[Recomendacao] = Field(..., description="Lista de recomendações contingentes formuladas.")
     conclusao_PMV: str = Field(..., description="Mensagem final de encerramento do relatório gerencial do PMV.")
+
+
+# --- FASE 0: IDEAÇÃO CRIATIVA E SINAIS DE FRONTEIRA ---
+
+class IdeiaForaDaCaixa(BaseModel):
+    id: str = Field(..., description="ID único do sinal de fronteira ou ideia disruptiva.")
+    titulo: str = Field(..., description="Título curto e impactante da ideia.")
+    descricao: str = Field(..., description="Descrição compreensiva da ruptura ou sinal de fronteira.")
+    autor_origem: str = Field(..., description="Quem propôs a ideia no brainstorming (ex: Futurologista de Fronteira).")
+    plausibilidade: float = Field(..., description="Estimativa de plausibilidade de ocorrência no horizonte temporal (escala de 0.0 a 1.0).")
+
+class BrainstormingConsolidation(BaseModel):
+    tema: str = Field(..., description="Tema central do debate de ideação.")
+    ideias: List[IdeiaForaDaCaixa] = Field(..., description="Lista de ideias fora-da-caixa e sinais disruptivos mapeados.")
+    eixos_ruptura: List[str] = Field(..., description="Eixos temáticos de ruptura conceitual identificados.")
+    provocacoes_atores: List[str] = Field(..., description="Perguntas provocativas, dilemas éticos ou técnicos direcionados aos atores convencionais da Fase 1.")
+

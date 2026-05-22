@@ -7,7 +7,8 @@ from models import (
     AnaliseEstruturalOutput,
     CenariosOutput,
     ConsistenciaOutput,
-    RecomendacoesOutput
+    RecomendacoesOutput,
+    BrainstormingConsolidation
 )
 from agents import (
     coordenador_metodologia,
@@ -24,8 +25,44 @@ from agents import (
     agente_cenarios,
     agente_consistencia,
     agente_analise_estrategica,
-    agente_redator_relatorios
+    agente_redator_relatorios,
+    futurologista_fronteira,
+    ficcionista_cenarios,
+    voz_juventude,
+    sintetizador_criativo
 )
+
+# --- FASE 0: IDEAÇÃO CRIATIVA E BRAINSTORMING DISRUPTIVO ---
+
+task_brainstorming_disruptivo = Task(
+    description=(
+        "Como Futurologista de Fronteira, conduza uma sessão de brainstorming altamente disruptiva e fora do senso comum "
+        "sobre a demanda inicial: '{demanda_inicial}'. "
+        "Trabalhe em estreita simulação mental com as visões do Ficcionista de Cenários (humanização e cotidiano especulativo) "
+        "e da Voz da Juventude (equidade intergeracional, resiliência climática e revolta socioecológica). "
+        "Identifique e proponha pelo menos 4 ideias de ruptura radical, sinais fracos periféricos, dilemas éticos "
+        "e eixos de mudança profunda que desafiem o status quo econômico e institucional convencional."
+    ),
+    expected_output="Registro de ideias disruptivas, rupturas conceituais e sinais de fronteira sobre o tema.",
+    agent=futurologista_fronteira
+)
+
+task_consolidacao_criativa = Task(
+    description=(
+        "Como Sintetizador e Curador de Ideias Fora-da-Caixa, analise a sessão de brainstorming disruptivo. "
+        "Filtre as ideias mais promissoras e impactantes. Consolide-as na estrutura formal exigida no PMV: "
+        "identifique e detalhe cada ideia (com título, descrição, autor de origem e plausibilidade), "
+        "agrupe-as em eixos de ruptura claros, e formule pelo menos 3 provocações críticas, dilemas éticos "
+        "ou técnicos direcionados diretamente para forçar os atores setoriais convencionais (Governo, Privado e Sociedade) "
+        "a repensarem suas posturas na Fase 1."
+    ),
+    expected_output="Consolidação estruturada de brainstorming criativo e rupturas com provocações críticas para os atores.",
+    agent=sintetizador_criativo,
+    output_pydantic=BrainstormingConsolidation
+)
+
+
+# --- FASE 1: DIRETRIZES E ATORES SETORIAIS (WORKSHOP) ---
 
 # 1. Tarefa de Interpretação e Escopo da Demanda
 task_interpretacao_demanda = Task(
@@ -42,12 +79,14 @@ task_interpretacao_demanda = Task(
 # 2. Debate dos Atores (Workshop) - Ator Governo
 task_debate_governo = Task(
     description=(
-        "Como Representante Governamental, analise a demanda e as diretrizes de escopo elaboradas pelo coordenador. "
+        "Como Representante Governamental, analise a demanda, as diretrizes de escopo elaboradas pelo coordenador, "
+        "e as ideias disruptivas e provocações geradas na Fase Criativa 0. "
+        "Você é OBRIGADO a abordar e responder diretamente a essas provocações disruptivas sob a ótica estatal! "
         "Defenda o posicionamento do governo no PMV: priorize a regulação setorial, a estabilidade de políticas públicas de longo prazo, "
         "o impacto fiscal e a equidade social. Apresente seus argumentos, preocupações de risco e oportunidades futuras de base estatal "
-        "com base exclusivamente em seu conhecimento endógeno (da LLM) sobre transições e tendências."
+        "com base exclusivamente em seu conhecimento endógeno (da LLM) sobre transições e em resposta aos dilemas e eixos de ruptura da Fase 0."
     ),
-    expected_output="Posicionamento e opinião detalhada do Ator Público sobre a demanda no PMV.",
+    expected_output="Posicionamento e opinião detalhada do Ator Público sobre a demanda e as provocações no PMV.",
     agent=ator_governo,
     output_pydantic=DebateOpinion
 )
@@ -55,12 +94,14 @@ task_debate_governo = Task(
 # 3. Debate dos Atores (Workshop) - Ator Privado
 task_debate_privado = Task(
     description=(
-        "Como Líder do Setor Privado, analise a demanda e as diretrizes do coordenador. "
+        "Como Líder do Setor Privado, analise a demanda, as diretrizes do coordenador, "
+        "e as ideias disruptivas e provocações geradas na Fase Criativa 0. "
+        "Você é OBRIGADO a abordar e responder diretamente a essas provocações disruptivas sob a ótica de mercado! "
         "Defenda o posicionamento do empresariado no PMV: exija desburocratização, segurança jurídica para investimentos, "
         "fomento à inovação de mercado e ganhos de produtividade tecnológica. Apresente seus argumentos e visões de riscos e "
-        "oportunidades de mercado a partir de seu conhecimento da LLM."
+        "oportunidades de mercado em resposta aos dilemas e eixos de ruptura da Fase 0."
     ),
-    expected_output="Posicionamento e opinião detalhada do Ator Privado sobre a demanda no PMV.",
+    expected_output="Posicionamento e opinião detalhada do Ator Privado sobre a demanda e as provocações no PMV.",
     agent=ator_privado,
     output_pydantic=DebateOpinion
 )
@@ -68,11 +109,13 @@ task_debate_privado = Task(
 # 4. Debate dos Atores (Workshop) - Ator Sociedade Civil
 task_debate_sociedade = Task(
     description=(
-        "Como Representante da Sociedade Civil e Especialistas, analise a demanda e as diretrizes. "
+        "Como Representante da Sociedade Civil e Especialistas, analise a demanda, as diretrizes do coordenador, "
+        "e as ideias disruptivas e provocações geradas na Fase Criativa 0. "
+        "Você é OBRIGADO a abordar e responder diretamente a essas provocações sob a ótica da sustentabilidade e equidade! "
         "Defenda os direitos humanos, a sustentabilidade ecológica integral, a justiça social e a governança participativa no PMV. "
-        "Apresente seus argumentos éticos e científicos sobre riscos sistêmicos e oportunidades socioambientais a partir do conhecimento da LLM."
+        "Apresente seus argumentos éticos e científicos sobre riscos sistêmicos e oportunidades socioambientais em resposta aos dilemas e eixos de ruptura da Fase 0."
     ),
-    expected_output="Posicionamento e opinião detalhada da Sociedade Civil e Academia sobre a demanda no PMV.",
+    expected_output="Posicionamento e opinião detalhada da Sociedade Civil e Academia sobre a demanda e as provocações no PMV.",
     agent=ator_sociedade_civil,
     output_pydantic=DebateOpinion
 )
