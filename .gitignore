@@ -1,0 +1,22 @@
+# Python environments
+.venv/
+venv/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Executions and outputs of analysis (excluding base markdown files if any, but ignoring PMV runs)
+log_execucao_pmv.md
+log_execucao_pmv.pdf
+gate_elementos.md
+gate_condicionantes.md
+gate_consistencia.md
+relatorio_*.pdf
+saida_*.csv

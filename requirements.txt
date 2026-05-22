@@ -1,0 +1,7 @@
+# Dependências do PMV do Sistema Modular de Análise Prospectiva e Cenários
+crewai>=0.175.0
+pydantic>=2.0
+langchain-google-genai>=1.0.0
+python-dotenv>=1.0.0
+reportlab>=4.1.0
+
