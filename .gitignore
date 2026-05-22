@@ -20,3 +20,9 @@ gate_condicionantes.md
 gate_consistencia.md
 relatorio_*.pdf
 saida_*.csv
+
+# Local API Keys
+.env
+
+# Analysis executions and outputs directory
+analises/
