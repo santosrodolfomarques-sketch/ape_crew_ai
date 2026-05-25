@@ -159,10 +159,14 @@ task_mapeamento_sementes = Task(
     description=(
         "Como Agente de Sinais, utilize as evidências normalizadas do debate e a especialização da sua LLM para identificar "
         "sementes de futuro (sinais fracos, indícios de rupturas, inovações conceituais). "
-        "Atribua a cada uma o grau de confiança científica/social e a rastreabilidade do ator de origem. "
+        "Atribua a cada semente de futuro uma pontuação quantitativa de Confiança variando de 0.0 a 1.0. "
+        "A Confiança representa o nível de robustez científica, social ou empírica que respalda a semente (onde 0.1-0.3 "
+        "indica Confiança Baixa: sinal incipiente com fraca evidência; 0.4-0.6 indica Confiança Média: tendências em "
+        "formação com evidência empírica parcial; e 0.7-1.0 indica Confiança Alta: megatendências ou fatos consolidados "
+        "com forte base teórica e de dados). Rastreie a origem do ator que mencionou/gerou a semente. "
         "Regra: Você não pode gerar condicionantes nesta etapa."
     ),
-    expected_output="Inventário estruturado de sementes de futuro com confiança no PMV.",
+    expected_output="Inventário estruturado de sementes de futuro com justificativa conceitual do grau de confiança no PMV.",
     agent=agente_sinais,
     output_pydantic=SementesOutput
 )
@@ -184,10 +188,12 @@ task_classificacao_elementos = Task(
     description=(
         "Como Classificador Prospectivo, avalie os eventos no horizonte e os categorize em Elementos de Futuro formais "
         "(tendência, incerteza, ruptura, driver, megatendência, sinal fraco, fato predeterminado ou curinga). "
-        "Forneça a justificativa lógica rigorosa para cada enquadramento e calcule a confiança metodológica. "
+        "Para cada elemento, calcule a Confiança metodológica geral do enquadramento (de 0.0 a 1.0) combinando a "
+        "confiança das sementes originais com a robustez lógica de sua evolução temporal. Forneça uma justificativa conceitual "
+        "clara e rigorosa, definindo explicitamente o significado do indicador de confiança adotado para dar transparência ao tomador de decisão. "
         "Aponte casos duvidosos como pendências de validação conceitual."
     ),
-    expected_output="Classificação sistemática de Elementos de Futuro com justificativas rigorosas no PMV.",
+    expected_output="Classificação sistemática de Elementos de Futuro com justificativas rigorosas e notas explicativas sobre Confiança no PMV.",
     agent=agente_classificador,
     output_pydantic=ClassificacaoOutput
 )
@@ -226,10 +232,14 @@ task_geracao_cenarios = Task(
     description=(
         "Como Projetista de Cenários, utilize os condicionantes de futuro aprovados e seus estados para construir "
         "um conjunto de Cenários Prospectivos alternativos, plausíveis e contrastantes (ex: Otimista, Pessimista, Contrastante/Ruptura). "
-        "Justifique a escolha metodológica adotada (e.g., Eixos de Schwartz ou Impacto Cruzado). Redija narrativas envolventes e consistentes, "
-        "descrevendo o estado futuro, o comportamento estratégico detalhado adotado pelos atores e a plausibilidade do cenário no PMV."
+        "Atenção crítica à coerência sistêmica: garanta que as combinações de estados de condicionantes e as trajetórias "
+        "de variáveis em cada cenário sejam matematicamente e logicamente plausíveis entre si, eliminando contradições internas "
+        "(ex.: um cenário com baixo investimento estatal não pode, ao mesmo tempo, prever uma infraestrutura pública de ponta). "
+        "Justifique detalhadamente a escolha metodológica adotada (e.g., Eixos de Schwartz ou Impacto Cruzado). Redija narrativas "
+        "ricas, aprofundadas e altamente explicativas sobre o estado futuro, o comportamento estratégico detalhado dos atores "
+        "e a plausibilidade de cada cenário no PMV."
     ),
-    expected_output="Arcabouço conceitual e narrativas detalhadas dos cenários prospectivos alternativos.",
+    expected_output="Arcabouço conceitual expandido e narrativas ricas e consistentes dos cenários prospectivos alternativos.",
     agent=agente_cenarios,
     output_pydantic=CenariosOutput
 )
@@ -238,12 +248,13 @@ task_geracao_cenarios = Task(
 # Audita logicamente e gera gate_consistencia.md antes das recomendações estratégicas.
 task_consistencia_cenarios = Task(
     description=(
-        "Como Auditor de Consistência, avalie sistematicamente as narrativas e dados de todos os cenários gerados. "
-        "Audite a coerência lógica interna (ex: se atores não agem de forma logicamente implausível, "
-        "se estados de condicionantes incompatíveis não foram agrupados). Aponte contradições formais, pressupostos frágeis, "
-        "lacunas estruturais de informação e emita o veredicto de consistência lógica do PMV."
+        "Como Auditor de Consistência, avalie com máximo rigor metodológico as narrativas e dados de todos os cenários gerados. "
+        "Audite a coerência lógica interna cruzada (ex: se atores não agem de forma logicamente implausível, "
+        "se estados de condicionantes incompatíveis não foram agrupados de forma indevida). Aponte contradições formais, "
+        "premissas frágeis, lacunas estruturais de informação e emita o veredicto de consistência lógica do PMV. "
+        "Forneça orientações detalhadas e fundamentadas sobre os pontos de fricção lógica analisados."
     ),
-    expected_output="Laudo de consistência lógica interna e auditoria de cenários no PMV.",
+    expected_output="Laudo analítico robusto de consistência lógica interna e auditoria detalhada de cenários no PMV.",
     agent=agente_consistencia,
     output_pydantic=ConsistenciaOutput
 )

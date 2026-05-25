@@ -218,8 +218,8 @@ def gerar_pdf_log(texto_log, path_saida="log_execucao_pmv.pdf"):
     doc.build(story, canvasmaker=NumberedCanvas)
 
 
-def gerar_pdf_fase1(dados_workshop, path_saida="relatorio_fase1_workshop.pdf"):
-    """Gera o PDF consolidado da Fase 1 - Escopo e Workshop de Atores."""
+def gerar_pdf_fase1_diagnostico(dados_diagnostico, path_saida="relatorio_fase1_diagnostico_e_incertezas.pdf"):
+    """Gera o PDF consolidado da Fase 1 - Diagnóstico, Workshop de Atores e Incertezas (GATE 1)."""
     doc = SimpleDocTemplate(
         path_saida,
         pagesize=letter,
@@ -235,12 +235,12 @@ def gerar_pdf_fase1(dados_workshop, path_saida="relatorio_fase1_workshop.pdf"):
     # Capa
     story.append(Spacer(1, 150))
     story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 1", styles['CoverTitle']))
-    story.append(Paragraph("Workshop de Atores, Escopo e Alinhamento Estrutural do PMV", styles['CoverSubtitle']))
-    story.append(Spacer(1, 100))
-    story.append(Paragraph("<b>Demanda Analisada:</b><br/>" + dados_workshop.get("demanda_inicial", ""), styles['CustomCallout']))
-    story.append(Spacer(1, 100))
+    story.append(Paragraph("Diagnóstico Estratégico, Mapeamento de Sinais e Classificação de Incertezas", styles['CoverSubtitle']))
+    story.append(Spacer(1, 80))
+    story.append(Paragraph("<b>Demanda Analisada:</b><br/>" + dados_diagnostico.get("demanda_inicial", ""), styles['CustomCallout']))
+    story.append(Spacer(1, 80))
     story.append(Paragraph("Sistema Modular de Análise Prospectiva e Cenários com IA<br/>"
-                           "MGI - 2026", styles['CoverMeta']))
+                           "MGI - SUBSECRETARIA DE PLANEJAMENTO ESTRATÉGICO - 2026", styles['CoverMeta']))
     story.append(PageBreak())
     
     # Conteúdo - Seção 1: Diretrizes Metodológicas
@@ -251,10 +251,9 @@ def gerar_pdf_fase1(dados_workshop, path_saida="relatorio_fase1_workshop.pdf"):
         styles['CustomBody']
     ))
     
-    diretrizes = dados_workshop.get("diretrizes_coordenador", "Diretrizes não registradas.")
+    diretrizes = dados_diagnostico.get("diretrizes_coordenador", "Diretrizes não registradas.")
     story.append(Paragraph("<b>Diretrizes Metodológicas Propostas:</b>", styles['CustomH2']))
     
-    # Processa parágrafos ou marcadores das diretrizes
     for part in diretrizes.split("\n"):
         if part.strip():
             if part.strip().startswith("-") or part.strip().startswith("*"):
@@ -266,14 +265,14 @@ def gerar_pdf_fase1(dados_workshop, path_saida="relatorio_fase1_workshop.pdf"):
     story.append(Spacer(1, 15))
     
     # Seção 2: Debate e Opiniões Setoriais
-    story.append(Paragraph("2. Workshop de Atores Setoriais", styles['CustomH1']))
+    story.append(Paragraph("2. Workshop de Atores Setoriais (Consensos e Divergências)", styles['CustomH1']))
     story.append(Paragraph(
         "O workshop virtual reuniu três grandes grupos de atores representados por agentes especializados. "
         "Cada ator trouxe argumentos e preocupações endógenas com base em suas visões setoriais:",
         styles['CustomBody']
     ))
     
-    opinioes = dados_workshop.get("opinioes", [])
+    opinioes = dados_diagnostico.get("opinioes", [])
     for op in opinioes:
         story.append(Paragraph(f"Ator: {op.get('ator_nome', 'Indefinido')}", styles['CustomH2']))
         story.append(Paragraph(f"<b>Postura no Debate:</b> {op.get('postura_debate', '')}", styles['CustomBody']))
@@ -282,66 +281,55 @@ def gerar_pdf_fase1(dados_workshop, path_saida="relatorio_fase1_workshop.pdf"):
         story.append(Paragraph(f"<b>Oportunidade Mapeada:</b> {op.get('oportunidade_vista', '')}", styles['CustomBody']))
         story.append(Spacer(1, 10))
         
-    story.append(PageBreak())
+    story.append(Spacer(1, 10))
     
-    # Seção 3: Consolidação do Workshop (Consensos e Divergências)
-    story.append(Paragraph("3. Síntese, Consensos e Divergências", styles['CustomH1']))
-    story.append(Paragraph(
-        "O Rapporteur compilou os pontos comuns e as polarizações observadas durante os debates, mapeando a dinâmica de forças:",
-        styles['CustomBody']
-    ))
-    
-    consol = dados_workshop.get("consolidacao", {})
-    
+    # Síntese, Consensos e Divergências
+    consol = dados_diagnostico.get("consolidacao", {})
     story.append(Paragraph("Pontos de Consenso Estabelecidos:", styles['CustomH2']))
     for cons in consol.get("pontos_consenso", []):
         story.append(Paragraph(f"✔ {cons}", styles['CustomBullet']))
         
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 5))
     story.append(Paragraph("Pontos de Divergência e Fricções:", styles['CustomH2']))
     for div in consol.get("pontos_divergencia", []):
         story.append(Paragraph(f"✖ {div}", styles['CustomBullet']))
         
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 5))
     story.append(Paragraph("Insights Sintetizados pelo Moderador:", styles['CustomH2']))
     for ins in consol.get("insights_sintetizados", []):
         story.append(Paragraph(f"💡 {ins}", styles['CustomBullet']))
         
-    doc.build(story, canvasmaker=NumberedCanvas)
-
-
-def gerar_pdf_fase2(dados_mapeamento, path_saida="relatorio_fase2_mapeamento.pdf"):
-    """Gera o PDF consolidado da Fase 2 - Sementes, Eventos e Classificação."""
-    doc = SimpleDocTemplate(
-        path_saida,
-        pagesize=letter,
-        leftMargin=54,
-        rightMargin=54,
-        topMargin=54,
-        bottomMargin=54
-    )
-    
-    styles = get_custom_styles()
-    story = []
-    
-    # Capa
-    story.append(Spacer(1, 150))
-    story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 2", styles['CoverTitle']))
-    story.append(Paragraph("Sementes de Futuro, Eventos no Horizonte e Classificação Metodológica (GATE 1)", styles['CoverSubtitle']))
-    story.append(Spacer(1, 100))
-    story.append(Paragraph("Sistema Modular de Análise Prospectiva e Cenários com IA<br/>"
-                           "MGI - 2026", styles['CoverMeta']))
     story.append(PageBreak())
     
-    # Seção 1: Sementes de Futuro
-    story.append(Paragraph("1. Inventário de Sementes de Futuro (Sinais Fracos)", styles['CustomH1']))
+    # Seção 3: Nota Conceitual sobre o Parâmetro de 'Confiança'
+    story.append(Paragraph("3. Nota Conceitual sobre o Parâmetro de 'Confiança'", styles['CustomH1']))
     story.append(Paragraph(
-        "A partir da análise do workshop, foram isoladas sementes de futuro e sinais fracos "
-        "com alta relevância conceitual e rastreabilidade para os discursos de base:",
+        "A 'Confiança' representa o nível de robustez científica, social ou empírica que respalda cada semente de futuro, "
+        "assim como a plausibilidade lógica do enquadramento dos elementos prospectivos. "
+        "A escala varia de 0.0 a 1.0 e serve como orientador analítico para mitigar incertezas heurísticas:",
+        styles['CustomBody']
+    ))
+    story.append(Paragraph(
+        "• <b>Confiança Baixa (0.1 - 0.3):</b> Sinais fracos emergentes ou inovações marginais com pouca base factual "
+        "ou ainda sob intenso debate técnico, mas que possuem alto potencial de disrupção estratégica.<br/>"
+        "• <b>Confiança Média (0.4 - 0.6):</b> Tendências em formação e variáveis com evidência empírica moderada, "
+        "sendo observados sinais consistentes de replicação ou adoção setorial.<br/>"
+        "• <b>Confiança Alta (0.7 - 1.0):</b> Megatendências consolidadas, fatos predeterminados ou drivers estruturais "
+        "amplamente apoiados por dados estatísticos ou consenso unânime entre especialistas.",
+        styles['CustomCallout']
+    ))
+    
+    story.append(Spacer(1, 15))
+    
+    # Seção 4: Sementes de Futuro
+    story.append(Paragraph("4. Inventário de Sementes de Futuro (Sinais Fracos)", styles['CustomH1']))
+    story.append(Paragraph(
+        "A partir da análise estruturada das evidências do debate, foram isoladas sementes de futuro "
+        "vinculadas aos discursos de base:",
         styles['CustomBody']
     ))
     
-    sementes = dados_mapeamento.get("sementes", [])
+    sementes = dados_diagnostico.get("sementes", [])
     for sem in sementes:
         desc = f"<b>ID: {sem.get('id', '')}</b> - {sem.get('descricao', '')}<br/>" \
                f"<i>Rastreabilidade: {sem.get('origem_debate', '')} | Confiança: {sem.get('confianca', 0.0)*100:.0f}%</i>"
@@ -352,15 +340,15 @@ def gerar_pdf_fase2(dados_mapeamento, path_saida="relatorio_fase2_mapeamento.pdf
         
     story.append(PageBreak())
     
-    # Seção 2: Eventos no Horizonte
-    story.append(Paragraph("2. Agrupamento em Eventos no Horizonte", styles['CustomH1']))
+    # Seção 5: Eventos no Horizonte e Classificação (GATE 1)
+    story.append(Paragraph("5. Eventos no Horizonte e Classificação Prospectiva (GATE 1)", styles['CustomH1']))
     story.append(Paragraph(
-        "As sementes de futuro correlacionadas foram consolidadas em Eventos no Horizonte, "
-        "com a estimativa de prazo de maturação e impacto estratégico sistêmico:",
+        "As sementes foram agrupadas em Eventos no Horizonte e, subsequentemente, "
+        "categorizadas em Elementos de Futuro formais, fornecendo a justificativa conceitual e a respectiva Confiança:",
         styles['CustomBody']
     ))
     
-    eventos = dados_mapeamento.get("eventos", [])
+    eventos = dados_diagnostico.get("eventos", [])
     for ev in eventos:
         desc_ev = f"<b>{ev.get('titulo', '')} (ID: {ev.get('id', '')})</b><br/>" \
                   f"Descrição: {ev.get('descricao', '')}<br/>" \
@@ -369,28 +357,20 @@ def gerar_pdf_fase2(dados_mapeamento, path_saida="relatorio_fase2_mapeamento.pdf
         story.append(Paragraph(f"📢 {desc_ev}", styles['CustomBullet']))
         story.append(Spacer(1, 10))
         
-    story.append(Spacer(1, 15))
-    
-    # Seção 3: Classificação e Gate 1
-    story.append(Paragraph("3. Classificação Prospectiva e Gate 1", styles['CustomH1']))
-    story.append(Paragraph(
-        "Os eventos no horizonte foram rigorosamente enquadrados nas categorias do funil prospectivo, "
-        "justificando analiticamente sua categorização para o posterior crivo estratégico:",
-        styles['CustomBody']
-    ))
-    
-    elementos = dados_mapeamento.get("elementos", [])
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("Elementos de Futuro Catalogados (Gate 1):", styles['CustomH2']))
+    elementos = dados_diagnostico.get("elementos", [])
     for el in elementos:
         desc_el = f"<b>{el.get('titulo', '')} (ID: {el.get('id', '')})</b><br/>" \
-                  f"Categoria: <b>{el.get('categoria', '').upper()}</b> | Confiança: {el.get('confianca', 0.0)*100:.0f}%<br/>" \
+                  f"Categoria: <b>{el.get('categoria', '').upper()}</b> | Confiança Metodológica: {el.get('confianca', 0.0)*100:.0f}%<br/>" \
                   f"Descrição: {el.get('descricao', '')}<br/>" \
                   f"<i>Justificativa: {el.get('justificativa', '')}</i>"
         story.append(Paragraph(f"📌 {desc_el}", styles['CustomBullet']))
         story.append(Spacer(1, 10))
         
-    # Pendências do Gate 1
-    pendencias = dados_mapeamento.get("pendencias_validacao", [])
+    pendencias = dados_diagnostico.get("pendencias_validacao", [])
     if pendencias:
+        story.append(Spacer(1, 10))
         story.append(Paragraph("Pendências para Gate Humano de Validação:", styles['CustomH2']))
         for pend in pendencias:
             story.append(Paragraph(f"⏳ {pend}", styles['CustomBullet']))
@@ -398,8 +378,11 @@ def gerar_pdf_fase2(dados_mapeamento, path_saida="relatorio_fase2_mapeamento.pdf
     doc.build(story, canvasmaker=NumberedCanvas)
 
 
-def gerar_pdf_fase3(dados_estruturais, path_saida="relatorio_fase3_matrizes.pdf"):
-    """Gera o PDF consolidado da Fase 3 - Análise Estrutural e Matrizes (GATE 2)."""
+
+
+
+def gerar_pdf_fase3(dados_estruturais, path_saida="relatorio_fase1_matrizes_estruturais.pdf"):
+    """Gera o PDF consolidado da Fase 1 - Matrizes e Análise Estrutural (GATE 2)."""
     doc = SimpleDocTemplate(
         path_saida,
         pagesize=letter,
@@ -414,11 +397,11 @@ def gerar_pdf_fase3(dados_estruturais, path_saida="relatorio_fase3_matrizes.pdf"
     
     # Capa
     story.append(Spacer(1, 150))
-    story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 3", styles['CoverTitle']))
+    story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 1 - MATRIZES", styles['CoverTitle']))
     story.append(Paragraph("Análise Estrutural, Matrizes Numéricas de Impacto Cruzado e Condicionantes (GATE 2)", styles['CoverSubtitle']))
     story.append(Spacer(1, 100))
     story.append(Paragraph("Sistema Modular de Análise Prospectiva e Cenários com IA<br/>"
-                           "MGI - 2026", styles['CoverMeta']))
+                           "MGI - SUBSECRETARIA DE PLANEJAMENTO ESTRATÉGICO - 2026", styles['CoverMeta']))
     story.append(PageBreak())
     
     # Seção 1: Matriz Impacto e Incerteza
@@ -556,8 +539,8 @@ def gerar_pdf_fase3(dados_estruturais, path_saida="relatorio_fase3_matrizes.pdf"
     doc.build(story, canvasmaker=NumberedCanvas)
 
 
-def gerar_pdf_fase4(dados_cenarios, path_saida="relatorio_fase4_cenarios.pdf"):
-    """Gera o PDF consolidado da Fase 4 - Cenários, Consistência e Recomendações (GATE 3)."""
+def gerar_pdf_fase2_cenarios(dados_cenarios, path_saida="relatorio_fase2_elaboracao_cenarios.pdf"):
+    """Gera o PDF consolidado da Fase 2 - Cenários, Consistência e Recomendações (GATE 3)."""
     doc = SimpleDocTemplate(
         path_saida,
         pagesize=letter,
@@ -572,11 +555,11 @@ def gerar_pdf_fase4(dados_cenarios, path_saida="relatorio_fase4_cenarios.pdf"):
     
     # Capa
     story.append(Spacer(1, 150))
-    story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 4", styles['CoverTitle']))
+    story.append(Paragraph("RELATÓRIO CONSOLIDADO: FASE 2", styles['CoverTitle']))
     story.append(Paragraph("Cenários Prospectivos, Auditoria de Consistência e Recomendações Contingentes (GATE 3)", styles['CoverSubtitle']))
     story.append(Spacer(1, 100))
     story.append(Paragraph("Sistema Modular de Análise Prospectiva e Cenários com IA<br/>"
-                           "MGI - 2026", styles['CoverMeta']))
+                           "MGI - SUBSECRETARIA DE PLANEJAMENTO ESTRATÉGICO - 2026", styles['CoverMeta']))
     story.append(PageBreak())
     
     # Seção 1: Arcabouço Metodológico e Cenários
@@ -690,7 +673,7 @@ def gerar_pdf_relatorio_final(dados_compilados, path_saida="relatorio_final_pros
     story.append(Paragraph("Sumário Executivo", styles['CustomTitle']))
     story.append(Paragraph(
         "Este documento apresenta o consolidado dos resultados do estudo prospectivo conduzido através da metodologia "
-        "de funil de prospecção modular com inteligência artificial. O fluxo estruturou análises setoriais em 4 fases "
+        "de funil de prospecção modular com inteligência artificial. O fluxo estruturou análises setoriais em fases "
         "independentes e encadeadas lógica e matematicamente, culminando na formulação de estratégias contingentes "
         "e pontes de decisão estratégicas.",
         styles['CustomBody']
@@ -709,6 +692,40 @@ def gerar_pdf_relatorio_final(dados_compilados, path_saida="relatorio_final_pros
         ))
         
     story.append(Spacer(1, 15))
+    
+    # --- RESUMO ESQUEMÁTICO DAS ETAPAS DE ELABORAÇÃO ---
+    story.append(Paragraph("Resumo Esquemático das Etapas de Elaboração", styles['CustomH1']))
+    story.append(Paragraph(
+        "Abaixo está ilustrado o fluxo metodológico rigoroso de elaboração do estudo de futuro modular, "
+        "desde o acolhimento da demanda inicial até a entrega das recomendações executivas contingentes:",
+        styles['CustomBody']
+    ))
+    
+    fluxo_dados = [
+        ["Etapa", "Descrição Metodológica", "Entregável / Gate"],
+        ["Fase 0: Ideação Criativa", "Brainstorming disruptivo e sinais de fronteira", "Ideias & Eixos de Ruptura"],
+        ["Fase 1: Workshop & Alinhamento", "Debate estruturado entre atores (Governo, Privado, Sociedade)", "Consensos & Divergências"],
+        ["Fase 1: Diagnóstico e Incertezas", "Extração de sementes, eventos no horizonte e classificação", "GATE 1: Elementos de Futuro (Confiança)"],
+        ["Fase 1: Análise Estrutural", "Matrizes quantitativas de impacto cruzado e motricidade", "GATE 2: Condicionantes Críticos"],
+        ["Fase 2: Cenários Prospectivos", "Modelagem de trajetórias plausíveis e narrativas de futuro", "Cenários Alternativos"],
+        ["Fase 2: Auditoria HITL", "Laudo formal de consistência lógica interna das narrativas", "GATE 3: Homologação de Consistência"],
+        ["Fase 2: Formulador Estratégico", "Definição de recomendações e pontes de decisão (gatilhos)", "Plano de Ação Contingente"]
+    ]
+    
+    t_fluxo = Table(fluxo_dados, colWidths=[130, 240, 150])
+    t_fluxo.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1A365D")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E0")),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#F7FAFC")]),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(t_fluxo)
+    story.append(Spacer(1, 20))
     
     # --- SEÇÃO 1: DIRETRIZES E WORKSHOP ---
     story.append(Paragraph("1. Fase 1: Escopo e Workshop de Atores", styles['CustomH1']))

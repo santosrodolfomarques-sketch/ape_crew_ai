@@ -190,10 +190,16 @@ def save_fase0_pdf_callback(output):
     except Exception as e:
         print(f"[PMV Error] Falha ao gerar PDF da Fase 0: {e}")
 
-def save_fase1_pdf_callback(output):
-    """Gera o PDF consolidado da Fase 1 - Escopo e Workshop de Atores."""
+def save_fase1_diagnostico_pdf_callback(output):
+    """Gera o PDF consolidado da Fase 1 - Diagnóstico, Workshop de Atores e Incertezas (GATE 1)."""
     try:
-        from pdf_generator import gerar_pdf_fase1
+        save_gate_elementos_callback(output)
+    except Exception as e:
+        print(f"[PMV Error] Falha ao salvar gate markdown 1: {e}")
+    try:
+        from pdf_generator import gerar_pdf_fase1_diagnostico
+        
+        # 1. Dados do Workshop de Atores
         opinioes_dados = []
         for name, task_obj in [
             ("Governo", task_debate_governo),
@@ -211,35 +217,15 @@ def save_fase1_pdf_callback(output):
                 })
         
         consol_dados = {}
-        if output.pydantic:
-            pyd = output.pydantic
+        if task_consolidacao_debate.output and task_consolidacao_debate.output.pydantic:
+            pyd = task_consolidacao_debate.output.pydantic
             consol_dados = {
                 "pontos_consenso": getattr(pyd, "pontos_consenso", []),
                 "pontos_divergencia": getattr(pyd, "pontos_divergencia", []),
                 "insights_sintetizados": getattr(pyd, "insights_sintetizados", [])
             }
-        
-        demanda = DEMANDA_INICIAL_GLOBAL or "Como a transição demográfica acelerada no Brasil impactará a previdência social?"
-        dados_workshop = {
-            "demanda_inicial": demanda,
-            "diretrizes_coordenador": task_interpretacao_demanda.output.raw if task_interpretacao_demanda.output else "",
-            "opinioes": opinioes_dados,
-            "consolidacao": consol_dados
-        }
-        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase1_workshop.pdf")
-        gerar_pdf_fase1(dados_workshop, path)
-        print("\n" + "="*50 + "\n[PMV] FASE 1: Relatório PDF 'relatorio_fase1_workshop.pdf' gerado com sucesso.\n" + "="*50 + "\n")
-    except Exception as e:
-        print(f"[PMV Error] Falha ao gerar PDF da Fase 1: {e}")
-
-def save_fase2_pdf_callback(output):
-    """Gera o PDF consolidado da Fase 2 - Sementes, Eventos e Classificação (Gate 1)."""
-    try:
-        save_gate_elementos_callback(output)
-    except Exception as e:
-        print(f"[PMV Error] Falha ao salvar gate markdown 1: {e}")
-    try:
-        from pdf_generator import gerar_pdf_fase2
+            
+        # 2. Dados do Mapeamento de Sinais e Classificação
         sementes_dados = []
         if task_mapeamento_sementes.output and task_mapeamento_sementes.output.pydantic:
             for sem in task_mapeamento_sementes.output.pydantic.sementes:
@@ -275,21 +261,28 @@ def save_fase2_pdf_callback(output):
                     "confianca": getattr(el, "confianca", 0.0)
                 })
             pendencias = getattr(pyd, "pendencias_validacao", [])
+            
+        demanda = DEMANDA_INICIAL_GLOBAL or "Como a transição demográfica acelerada no Brasil impactará a previdência social?"
         
-        dados_mapeamento = {
+        dados_diagnostico = {
+            "demanda_inicial": demanda,
+            "diretrizes_coordenador": task_interpretacao_demanda.output.raw if task_interpretacao_demanda.output else "",
+            "opinioes": opinioes_dados,
+            "consolidacao": consol_dados,
             "sementes": sementes_dados,
             "eventos": eventos_dados,
             "elementos": elementos_dados,
             "pendencias_validacao": pendencias
         }
-        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase2_mapeamento.pdf")
-        gerar_pdf_fase2(dados_mapeamento, path)
-        print("\n" + "="*50 + "\n[PMV] FASE 2: Relatório PDF 'relatorio_fase2_mapeamento.pdf' gerado com sucesso.\n" + "="*50 + "\n")
+        
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase1_diagnostico_e_incertezas.pdf")
+        gerar_pdf_fase1_diagnostico(dados_diagnostico, path)
+        print("\n" + "="*50 + "\n[PMV] FASE 1: Relatório PDF 'relatorio_fase1_diagnostico_e_incertezas.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
-        print(f"[PMV Error] Falha ao gerar PDF da Fase 2: {e}")
+        print(f"[PMV Error] Falha ao gerar PDF de Diagnóstico da Fase 1: {e}")
 
 def save_fase3_pdf_callback(output):
-    """Gera o PDF consolidado da Fase 3 - Matrizes e Condicionantes (Gate 2)."""
+    """Gera o PDF consolidado da Fase 1 - Matrizes e Análise Estrutural (Gate 2)."""
     try:
         save_gate_condicionantes_callback(output)
     except Exception as e:
@@ -345,16 +338,16 @@ def save_fase3_pdf_callback(output):
             "matriz_impacto_cruzado": matriz_ic,
             "condicionantes": condicionantes_dados
         }
-        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase3_matrizes.pdf")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase1_matrizes_estruturais.pdf")
         gerar_pdf_fase3(dados_estruturais, path)
-        print("\n" + "="*50 + "\n[PMV] FASE 3: Relatório PDF 'relatorio_fase3_matrizes.pdf' gerado com sucesso.\n" + "="*50 + "\n")
+        print("\n" + "="*50 + "\n[PMV] FASE 1 - MATRIZES: Relatório PDF 'relatorio_fase1_matrizes_estruturais.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
-        print(f"[PMV Error] Falha ao gerar PDF da Fase 3: {e}")
+        print(f"[PMV Error] Falha ao gerar PDF de Matrizes da Fase 1: {e}")
 
-def save_fase4_pdf_callback(output):
-    """Gera o PDF consolidado da Fase 4 - Cenários e Recomendações (Gate 3)."""
+def save_fase2_cenarios_pdf_callback(output):
+    """Gera o PDF consolidado da Fase 2 - Cenários e Recomendações (Gate 3)."""
     try:
-        from pdf_generator import gerar_pdf_fase4
+        from pdf_generator import gerar_pdf_fase2_cenarios
         metodologia = ""
         justificativa = ""
         cenarios_dados = []
@@ -415,11 +408,11 @@ def save_fase4_pdf_callback(output):
             "recomendacoes": recom_dados,
             "conclusao_pmv": conclusao
         }
-        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase4_cenarios.pdf")
-        gerar_pdf_fase4(dados_cenarios, path)
-        print("\n" + "="*50 + "\n[PMV] FASE 4: Relatório PDF 'relatorio_fase4_cenarios.pdf' gerado com sucesso.\n" + "="*50 + "\n")
+        path = os.path.join(OUTPUT_DIR_GLOBAL, "relatorio_fase2_elaboracao_cenarios.pdf")
+        gerar_pdf_fase2_cenarios(dados_cenarios, path)
+        print("\n" + "="*50 + "\n[PMV] FASE 2: Relatório PDF 'relatorio_fase2_elaboracao_cenarios.pdf' gerado com sucesso.\n" + "="*50 + "\n")
     except Exception as e:
-        print(f"[PMV Error] Falha ao gerar PDF da Fase 4: {e}")
+        print(f"[PMV Error] Falha ao gerar PDF de Cenários da Fase 2: {e}")
 
 def save_relatorio_final_pdf_callback(output):
     """Gera o PDF consolidado do Relatório Final Master de até 10 páginas."""
@@ -690,19 +683,19 @@ task_consolidacao_criativa.callback = make_general_callback("Consolidacao Criati
 task_debate_governo.callback = make_general_callback("Debate Governo")
 task_debate_privado.callback = make_general_callback("Debate Privado")
 task_debate_sociedade.callback = make_general_callback("Debate Sociedade")
-task_consolidacao_debate.callback = make_general_callback("Consolidacao Debate", save_fase1_pdf_callback)
+task_consolidacao_debate.callback = make_general_callback("Consolidacao Debate")
 task_extracao_evidencias.callback = make_general_callback("Extracao Evidencias")
 task_normalizacao.callback = make_general_callback("Normalizacao")
 task_mapeamento_sementes.callback = make_general_callback("Mapeamento Sementes")
 task_agrupamento_eventos.callback = make_general_callback("Agrupamento Eventos")
 
 # Estas tarefas possuem callbacks específicos de Gates, preservados e encapsulados:
-task_classificacao_elementos.callback = make_general_callback("Classificacao Elementos", save_fase2_pdf_callback)
+task_classificacao_elementos.callback = make_general_callback("Classificacao Elementos", save_fase1_diagnostico_pdf_callback)
 task_analise_estrutural.callback = make_general_callback("Analise Estrutural", save_fase3_pdf_callback)
 task_proposta_condicionantes.callback = make_general_callback("Proposta Condicionantes")
 task_geracao_cenarios.callback = make_general_callback("Geracao Cenarios")
 task_consistencia_cenarios.callback = make_general_callback("Consistencia Cenarios", save_gate_consistencia_callback)
-task_recomendacoes_estrategicas.callback = make_general_callback("Recomendacoes Estrategicas", save_fase4_pdf_callback)
+task_recomendacoes_estrategicas.callback = make_general_callback("Recomendacoes Estrategicas", save_fase2_cenarios_pdf_callback)
 task_relatorio_final.callback = make_general_callback("Relatorio Final", save_relatorio_final_pdf_callback)
 
 
