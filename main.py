@@ -25,7 +25,7 @@ try:
 except ImportError:
     pass
 
-from crew import AnaliseProspectivaCrew
+from crew import AnaliseProspectivaFlow
 
 class Tee(object):
     """Classe para duplicar saídas do console para a tela e para o arquivo de log do PMV."""
@@ -160,8 +160,8 @@ def main():
         print("[PMV] Iniciando orquestração multiagente...")
         
         # Instancia e roda o fluxo do PMV
-        prospecção = AnaliseProspectivaCrew(demanda_inicial=demanda_bruta)
-        resultado_final = prospecção.kickoff()
+        prospecção = AnaliseProspectivaFlow()
+        resultado_final = prospecção.kickoff(inputs={"demanda_inicial": demanda_bruta})
         
         print("\n" + "="*80)
         print("                    SUMÁRIO EXECUTIVO DO PMV FINALIZADO                    ")

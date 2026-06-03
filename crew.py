@@ -701,24 +701,243 @@ task_relatorio_final.callback = make_general_callback("Relatorio Final", save_re
 
 
 
-# --- CLASSE DE ORQUESTRAÇÃO DA CREW ---
+from crewai.flow.flow import Flow, listen, start, router
+from pydantic import BaseModel, Field
+from typing import Optional
+import asyncio
+from agents import gemini_pro_llm, gemini_flash_llm
+from models import (
+    DebateOpinion,
+    DebateConsolidation,
+    SementesOutput,
+    ClassificacaoOutput,
+    AnaliseEstruturalOutput,
+    CenariosOutput,
+    ConsistenciaOutput,
+    RecomendacoesOutput,
+    BrainstormingConsolidation
+)
 
-class AnaliseProspectivaCrew:
-    """Orquestração multiagente sequencial e por debates para o PMV."""
+# --- ESTADO DO FLUXO (PYDANTIC) ---
+
+class AnaliseState(BaseModel):
+    demanda_inicial: str = ""
+    brainstorming_output: Optional[BrainstormingConsolidation] = None
+    debate_governo_output: Optional[DebateOpinion] = None
+    debate_privado_output: Optional[DebateOpinion] = None
+    debate_sociedade_output: Optional[DebateOpinion] = None
+    debate_output: Optional[DebateConsolidation] = None
+    sementes_output: Optional[SementesOutput] = None
+    classificacao_output: Optional[ClassificacaoOutput] = None
+    estrutural_output: Optional[AnaliseEstruturalOutput] = None
+    cenarios_output: Optional[CenariosOutput] = None
+    consistencia_output: Optional[ConsistenciaOutput] = None
+    recomendacoes_output: Optional[RecomendacoesOutput] = None
+    relatorio_final_output: str = ""
+    cenario_retry_count: int = 0
+
+
+# --- CLASSE DE ORQUESTRAÇÃO DO FLUXO ---
+
+class AnaliseProspectivaFlow(Flow[AnaliseState]):
+    """Orquestração multiagente avançada via CrewAI Flows para o PMV."""
     
-    def __init__(self, demanda_inicial: str):
-        self.demanda_inicial = demanda_inicial
-
-    def kickoff(self) -> str:
+    @start()
+    def start_ideacao(self):
+        """Fase 0: Ideação Criativa e Brainstorming Disruptivo."""
+        print(f"[PMV Flow] Iniciando Fase 0: Ideação Criativa...")
+        
         # Configura fallbacks de demanda inicial para os callbacks
         global DEMANDA_INICIAL_GLOBAL
-        DEMANDA_INICIAL_GLOBAL = self.demanda_inicial
+        DEMANDA_INICIAL_GLOBAL = self.state.demanda_inicial
         
-        # Configura os contextos de tarefas encadeadas da Fase 1 e Relatório Final
+        ideacao_crew = Crew(
+            agents=[futurologista_fronteira, sintetizador_criativo],
+            tasks=[task_brainstorming_disruptivo, task_consolidacao_criativa],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = ideacao_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.brainstorming_output = result.pydantic
+        print(f"[PMV Flow] Fase 0 concluída com sucesso.")
+        return result
+
+    @listen(start_ideacao)
+    async def debate_phase(self, ideacao_result):
+        """Fase 1: Workshop de Atores em Debate (Paralelo + Hierárquico)."""
+        print(f"[PMV Flow] Iniciando Fase 1: Debate e Workshop de Atores...")
+        
+        # Conecta o contexto da consolidação criativa para os debates individuais
         task_debate_governo.context = [task_consolidacao_criativa]
         task_debate_privado.context = [task_consolidacao_criativa]
         task_debate_sociedade.context = [task_consolidacao_criativa]
         
+        # 1. Executa os debates individuais em paralelo
+        crew_gov = Crew(agents=[ator_governo], tasks=[task_debate_governo], verbose=True)
+        crew_priv = Crew(agents=[ator_privado], tasks=[task_debate_privado], verbose=True)
+        crew_soc = Crew(agents=[ator_sociedade_civil], tasks=[task_debate_sociedade], verbose=True)
+        
+        print("[PMV Flow] Disparando os debates dos atores em paralelo...")
+        res_gov, res_priv, res_soc = await asyncio.gather(
+            crew_gov.akickoff(inputs={"demanda_inicial": self.state.demanda_inicial}),
+            crew_priv.akickoff(inputs={"demanda_inicial": self.state.demanda_inicial}),
+            crew_soc.akickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        )
+        
+        self.state.debate_governo_output = res_gov.pydantic
+        self.state.debate_privado_output = res_priv.pydantic
+        self.state.debate_sociedade_output = res_soc.pydantic
+        
+        # Alimenta os outputs gerados de volta nas tarefas correspondentes
+        task_debate_governo.output = res_gov
+        task_debate_privado.output = res_priv
+        task_debate_sociedade.output = res_soc
+        
+        # 2. Executa a consolidação do debate de forma Hierárquica
+        print("[PMV Flow] Iniciando debate hierárquico para consolidação das visões...")
+        debate_consol_crew = Crew(
+            agents=[ator_governo, ator_privado, ator_sociedade_civil, relator_debate],
+            tasks=[task_consolidacao_debate],
+            process=Process.hierarchical,
+            manager_llm=gemini_pro_llm,
+            verbose=True
+        )
+        
+        res_debate = await debate_consol_crew.akickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.debate_output = res_debate.pydantic
+        print(f"[PMV Flow] Fase 1: Debate consolidado.")
+        return res_debate
+
+    @listen(debate_phase)
+    def classification_phase(self, debate_result):
+        """Fase 1: Extração, Normalização, Sinais, Eventos e Classificação."""
+        print(f"[PMV Flow] Iniciando Fase 1: Classificação de Elementos de Futuro...")
+        
+        classificacao_crew = Crew(
+            agents=[
+                agente_extracao,
+                agente_normalizacao,
+                agente_sinais,
+                agente_agrupamento,
+                agente_classificador
+            ],
+            tasks=[
+                task_extracao_evidencias,
+                task_normalizacao,
+                task_mapeamento_sementes,
+                task_agrupamento_eventos,
+                task_classificacao_elementos
+            ],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = classificacao_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.classificacao_output = result.pydantic
+        print(f"[PMV Flow] Classificação concluída.")
+        return result
+
+    @listen(classification_phase)
+    def structural_analysis_phase(self, classification_result):
+        """Fase 1: Matrizes de Impacto e Motricidade."""
+        print(f"[PMV Flow] Iniciando Análise Estrutural e Matrizes...")
+        
+        estruturacao_crew = Crew(
+            agents=[agente_estruturacao],
+            tasks=[task_analise_estrutural, task_proposta_condicionantes],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = estruturacao_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.estrutural_output = result.pydantic
+        print(f"[PMV Flow] Análise estrutural concluída.")
+        return result
+
+    @listen(structural_analysis_phase)
+    def generate_scenarios(self, structural_result):
+        """Fase 2: Geração de Cenários Prospectivos (Ponto de Entrada do Loop)."""
+        print(f"[PMV Flow] Gerando Cenários (Tentativa {self.state.cenario_retry_count + 1}/4)...")
+        
+        # Se for um retry, adicionamos o feedback do auditor no contexto
+        if self.state.cenario_retry_count > 0 and self.state.consistencia_output:
+            feedback_str = (
+                f"AUDITORIA ANTERIOR REPROVADA. Por favor, ajuste os cenários para corrigir estas falhas:\n"
+                f"- Contradições: {self.state.consistencia_output.contradicoes}\n"
+                f"- Lacunas: {self.state.consistencia_output.lacunas}"
+            )
+            # Adiciona dinamicamente feedback ao prompt
+            task_geracao_cenarios.description = (
+                task_geracao_cenarios.description + f"\n\nATENÇÃO - CORREÇÃO DE AUDITORIA:\n{feedback_str}"
+            )
+            
+        cenarios_crew = Crew(
+            agents=[agente_cenarios],
+            tasks=[task_geracao_cenarios],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = cenarios_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.cenarios_output = result.pydantic
+        task_geracao_cenarios.output = result
+        return result
+
+    @listen(generate_scenarios)
+    def audit_consistency(self, cenarios_result):
+        """Fase 2: Auditoria de Consistência dos Cenários."""
+        print(f"[PMV Flow] Auditando consistência lógica dos cenários...")
+        
+        consistencia_crew = Crew(
+            agents=[agente_consistencia],
+            tasks=[task_consistencia_cenarios],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = consistencia_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.consistencia_output = result.pydantic
+        task_consistencia_cenarios.output = result
+        return result
+
+    @router(audit_consistency)
+    def check_scenarios_consistency(self):
+        """Router para verificar se os cenários passaram na auditoria ou estouraram retries."""
+        if not self.state.consistencia_output.aprovado_consistente and self.state.cenario_retry_count < 3:
+            self.state.cenario_retry_count += 1
+            print(f"[PMV Flow Router] Cenários inconsistentes. Iniciando nova tentativa de correção...")
+            return "generate_scenarios"
+        else:
+            if self.state.consistencia_output.aprovado_consistente:
+                print(f"[PMV Flow Router] Cenários APROVADOS com sucesso na auditoria!")
+            else:
+                print(f"[PMV Flow Router] Limite máximo de retries atingido. Prosseguindo mesmo com inconsistências.")
+            return "gerar_recomendacoes"
+
+    @listen("gerar_recomendacoes")
+    def recommendations_phase(self):
+        """Fase 2: Recomendações Estratégicas."""
+        print(f"[PMV Flow] Gerando Recomendações Estratégicas e Pontes de Decisão...")
+        
+        recomendacao_crew = Crew(
+            agents=[agente_analise_estrategica],
+            tasks=[task_recomendacoes_estrategicas],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = recomendacao_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.recomendacoes_output = result.pydantic
+        task_recomendacoes_estrategicas.output = result
+        return result
+
+    @listen(recommendations_phase)
+    def final_report_phase(self, recomendacoes_result):
+        """Etapa Final: Redação do Relatório Master de Análise Prospectiva."""
+        print(f"[PMV Flow] Consolidando Relatório Final Executivo...")
+        
+        # Conecta o contexto acumulado de todas as fases para a redação
         task_relatorio_final.context = [
             task_interpretacao_demanda,
             task_consolidacao_criativa,
@@ -729,10 +948,31 @@ class AnaliseProspectivaCrew:
             task_consistencia_cenarios,
             task_recomendacoes_estrategicas
         ]
+        
+        relatorio_crew = Crew(
+            agents=[agente_redator_relatorios],
+            tasks=[task_relatorio_final],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        result = relatorio_crew.kickoff(inputs={"demanda_inicial": self.state.demanda_inicial})
+        self.state.relatorio_final_output = result.raw
+        
+        # --- CÁLCULO E EXIBIÇÃO DO MONITOR DE TOKENS E CUSTOS ---
+        self.print_cost_summary(relatorio_crew)
+        
+        return result.raw
 
-        # Instancia a Crew com os 19 agentes e 18 tarefas mapeados
-        crew = Crew(
-            agents=[
+    def print_cost_summary(self, final_crew):
+        """Compila e imprime o painel de faturamento no console e no arquivo de log."""
+        try:
+            total_flash_input = 0
+            total_flash_output = 0
+            total_pro_input = 0
+            total_pro_output = 0
+            
+            all_agents = [
                 coordenador_metodologia,
                 futurologista_fronteira,
                 ficcionista_cenarios,
@@ -752,44 +992,9 @@ class AnaliseProspectivaCrew:
                 agente_consistencia,
                 agente_analise_estrategica,
                 agente_redator_relatorios
-            ],
-            tasks=[
-                task_interpretacao_demanda,
-                task_brainstorming_disruptivo,
-                task_consolidacao_criativa,
-                task_debate_governo,
-                task_debate_privado,
-                task_debate_sociedade,
-                task_consolidacao_debate,
-                task_extracao_evidencias,
-                task_normalizacao,
-                task_mapeamento_sementes,
-                task_agrupamento_eventos,
-                task_classificacao_elementos,
-                task_analise_estrutural,
-                task_proposta_condicionantes,
-                task_geracao_cenarios,
-                task_consistencia_cenarios,
-                task_recomendacoes_estrategicas,
-                task_relatorio_final
-            ],
-            process=Process.sequential,
-            verbose=True
-        )
-        
-        # Executa a orquestração do funil prospectivo
-        print(f"[PMV] Inicializando a execução do Crew de Análise Prospectiva...")
-        result = crew.kickoff(inputs={"demanda_inicial": self.demanda_inicial})
-        print(f"[PMV] Execução finalizada com sucesso.")
-        
-        # --- CÁLCULO E EXIBIÇÃO DO MONITOR DE TOKENS E CUSTOS ---
-        try:
-            total_flash_input = 0
-            total_flash_output = 0
-            total_pro_input = 0
-            total_pro_output = 0
+            ]
             
-            for agent in crew.agents:
+            for agent in all_agents:
                 try:
                     usage = agent.llm.get_token_usage_summary()
                     model = agent.llm.model
@@ -844,7 +1049,7 @@ class AnaliseProspectivaCrew:
                 f"| **Gemini 2.5 Pro** | {total_pro_input:,} | {total_pro_output:,} | {total_pro_input + total_pro_output:,} | ${pro_cost_usd:.4f} | R$ {pro_cost_usd*5.20:.2f} |\n"
                 f"| **TOTAL ACUMULADO** | {total_flash_input + total_pro_input:,} | {total_flash_output + total_pro_output:,} | {total_flash_input + total_flash_output + total_pro_input + total_pro_output:,} | **${total_cost_usd:.4f}** | **R$ {total_cost_brl:.2f}** |\n"
             )
-            # Tenta salvar no fim de log_execucao_pmv.md
+            
             try:
                 log_md_path = os.path.join(OUTPUT_DIR_GLOBAL, "log_execucao_pmv.md")
                 if os.path.exists(log_md_path):
@@ -854,6 +1059,5 @@ class AnaliseProspectivaCrew:
                 pass
         except Exception as ex_metrics:
             print(f"[PMV Error] Erro ao processar monitor de consumo: {ex_metrics}")
-            
-        return result
+
 

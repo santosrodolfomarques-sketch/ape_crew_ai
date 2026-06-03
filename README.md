@@ -4,14 +4,24 @@ Um ecossistema multiagente baseado em **CrewAI** e **Google Gemini** para conduz
 
 ## 🚀 Visão Geral
 
-O projeto implementa o **Funil Prospectivo Metodológico v5**, utilizando conhecimento endógeno de LLMs para simular debates entre atores governamentais, privados e da sociedade civil. O sistema produz automaticamente:
+O projeto implementa o **Funil Prospectivo Metodológico v5** orquestrado via **CrewAI Flows**, organizando o pipeline de 18 tarefas em 6 Crews modulares sob um estado centralizado e tipado (`AnaliseState` com Pydantic). O sistema produz automaticamente:
 - 💡 **Fase 0 (Ideação Criativa)**: Agentes disruptivos mitigando o viés do "senso comum" com sinais de fronteira e provocações estruturadas.
-- 📊 **Análise Estrutural e Matrizes**: Cálculo iterativo de impacto, incerteza, motricidade e dependência.
-- 🔮 **Cenários Prospectivos**: Narrativas plausíveis, consistentes e homologadas por agentes auditores independentes.
-- 📑 **Relatórios Premium**: Conversão automática de logs de execução e outputs de fases em documentos PDF elegantes com paginação, esquemas visuais e design corporativo.
-- 💰 **Monitor de Custos**: Rastreamento em tempo real do consumo volumétrico de tokens (Flash vs. Pro) faturado e convertido para BRL na finalização da orquestração.
+- 🗣️ **Fase 1 (Workshop de Atores)**: Debate híbrido avançado, rodando a coleta de opiniões dos atores setoriais em paralelo (`asyncio.gather`) e realizando a consolidação sob uma estrutura hierárquica coordenada pelo Relator (`Process.hierarchical`).
+- 📊 **Análise Estrutural e Matrizes**: Cálculo de impacto, incerteza, motricidade e dependência.
+- 🔮 **Cenários Prospectivos (Loop de Correção)**: Geração de narrativas plausíveis acoplada a um loop de auto-correção iterativo com o Auditor de Consistência. Se detectadas incoerências lógicas, os cenários são regenerados de forma autônoma (limite de 3 tentativas) a partir do feedback estruturado.
+- 📑 **Relatórios Premium**: Geração de logs de execução e outputs de fases em documentos PDF elegantes baseados em `ReportLab`.
+- 💰 **Monitor de Custos**: Rastreamento em tempo real do consumo de tokens faturado e convertido para BRL na finalização da orquestração.
 
 ## ⚙️ Arquitetura e Fluxo de Trabalho
+
+O pipeline segue um fluxo de eventos orquestrado pelo `AnaliseProspectivaFlow`:
+1. **`start_ideacao`** -> Inicializa a ideação com o brainstorming disruptivo.
+2. **`debate_phase`** -> Executa o debate setorial paralelo e consolida com Crew Hierárquico.
+3. **`classification_phase`** -> Saneamento conceitual e classificação de elementos.
+4. **`structural_analysis_phase`** -> Construção de matrizes e definição de condicionantes.
+5. **`generate_scenarios`** <-> **`audit_consistency`** -> Loop de consistência de cenários mediado por um router de auditoria.
+6. **`recommendations_phase`** -> Geração de recomendações e pontes de decisão.
+7. **`final_report_phase`** -> Geração do relatório final e monitor de custos.
 
 Para entender a fundo a dinâmica de cada fase da metodologia, bem como o papel de cada agente especializado e das tarefas interconectadas, consulte a documentação detalhada da arquitetura:
 👉 **[FLUXO_DE_TRABALHO.md](./FLUXO_DE_TRABALHO.md)**
